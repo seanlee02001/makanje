@@ -11,6 +11,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus (requires font-size >= 16px) */
+input, textarea, select {
+  font-size: 16px;
+}
+
 /* ── Utilities ─────────────────────────────────────────── */
 @layer utilities {
   /* Cards — solid white, sharp border, light shadow */
