@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils/cn'
 
-type Variant = 'primary' | 'secondary' | 'destructive' | 'ghost'
+type Variant = 'primary' | 'secondary' | 'green' | 'destructive' | 'ghost'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -9,10 +9,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-  secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800',
+  primary:     'bg-orange-600 hover:bg-orange-700 text-white shadow-sm shadow-orange-600/30',
+  secondary:   'bg-white/50 backdrop-blur-sm border border-white/[0.72] text-[#7C4A30] hover:bg-white/70',
+  green:       'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/30',
   destructive: 'bg-red-600 hover:bg-red-700 text-white',
-  ghost: 'hover:bg-gray-100 text-gray-700',
+  ghost:       'hover:bg-white/40 text-[#7C4A30]',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -21,7 +22,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold font-heading transition-all active:scale-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
         variantClasses[variant],
         className
       )}

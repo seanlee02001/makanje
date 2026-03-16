@@ -50,20 +50,20 @@ export function SlotCell({ slot, familyId, weekStart, day, mealSlot, onUpdate, o
     <>
       <div
         onClick={() => setPickerOpen(true)}
-        className={`relative rounded-lg border-2 cursor-pointer transition-all min-h-[56px] flex items-center justify-center p-2 ${
+        className={`relative rounded-xl cursor-pointer transition-all min-h-[56px] flex items-center justify-center p-2 ${
           hasMeal
-            ? 'border-emerald-200 bg-emerald-50 hover:border-emerald-400'
-            : 'border-dashed border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30'
+            ? 'bg-white/50 backdrop-blur-sm border border-white/72 hover:bg-white/65'
+            : 'border border-dashed border-white/60 bg-white/20 hover:bg-white/35'
         }`}
       >
         {hasMeal ? (
           <>
-            <p className="text-xs font-medium text-emerald-800 text-center line-clamp-2 pr-4">
+            <p className="text-[11px] font-semibold text-[#3B0F00] text-center line-clamp-2 pr-4 leading-tight font-heading">
               {slot.meal!.name}
             </p>
             <button
               onClick={handleClear}
-              className="absolute top-1 right-1 rounded-full w-5 h-5 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-300 flex items-center justify-center transition-colors"
+              className="absolute top-1 right-1 rounded-full w-5 h-5 bg-white/70 border border-white/60 text-[#B8836A] hover:text-red-500 flex items-center justify-center transition-colors"
               aria-label="Remove meal"
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -72,7 +72,7 @@ export function SlotCell({ slot, familyId, weekStart, day, mealSlot, onUpdate, o
             </button>
           </>
         ) : (
-          <svg className="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="h-4 w-4 text-[#B8836A]/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
         )}

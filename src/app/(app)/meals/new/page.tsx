@@ -77,17 +77,18 @@ export default function NewMealPage() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="flex flex-col min-h-full">
+      {/* Sticky header */}
+      <div className="glass-strong sticky top-0 z-20 px-4 pt-4 pb-3 flex items-center gap-3">
         <Link href="/meals" className="text-gray-400 hover:text-gray-600">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">New Meal</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-[#FED7AA] font-heading">New Meal</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-4 max-w-lg mx-auto w-full">
         <Input
           id="meal-name"
           label="Meal name"
@@ -106,7 +107,7 @@ export default function NewMealPage() {
         />
 
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Ingredients</p>
+          <p className="text-sm font-semibold text-gray-700 mb-2 font-heading">Ingredients</p>
           <div className="flex flex-col gap-2">
             {ingredients.map((ing, i) => (
               <IngredientRow
@@ -121,7 +122,7 @@ export default function NewMealPage() {
           <button
             type="button"
             onClick={addIngredient}
-            className="mt-3 text-sm text-emerald-600 font-medium hover:underline flex items-center gap-1"
+            className="mt-3 text-sm text-orange-600 font-medium hover:underline flex items-center gap-1"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

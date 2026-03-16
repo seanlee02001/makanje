@@ -2,26 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Google Fonts ──────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+/* ── Base ──────────────────────────────────────────────── */
+html, body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
+/* ── Utilities ─────────────────────────────────────────── */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* Cards — solid white, sharp border, light shadow */
+  .glass {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  /* Sticky headers */
+  .glass-strong {
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  /* Bottom nav */
+  .glass-nav {
+    background: #FFFFFF;
+    border-top: 1px solid #E5E7EB;
+  }
+
+  /* ── Page backgrounds — solid flat colours ── */
+  .bg-plan     { background: #FFF7ED; }   /* orange-50  */
+  .bg-meals    { background: #FFF7ED; }   /* orange-50  */
+  .bg-shopping { background: #F0FDF4; }   /* green-50   */
+  .bg-settings { background: #FFF7ED; }   /* orange-50  */
+  .bg-login    { background: #EA580C; }   /* solid orange (top half handled in layout) */
+
+  .text-balance { text-wrap: balance; }
+  .font-heading { font-family: 'Nunito', sans-serif; }
+  .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+  .pb-safe      { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* ── Dark mode ─────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .bg-plan, .bg-meals, .bg-settings { background: #1C1107; }
+  .bg-shopping                       { background: #052E16; }
+
+  .glass {
+    background: #2D1A08;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: none;
+  }
+  .glass-strong {
+    background: #1C1107;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    box-shadow: none;
+  }
+  .glass-nav {
+    background: #1C1107;
+    border-top: 1px solid rgba(255,255,255,0.08);
   }
 }

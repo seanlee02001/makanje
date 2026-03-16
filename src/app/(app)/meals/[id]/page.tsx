@@ -87,114 +87,127 @@ export default function MealDetailPage() {
   if (!meal) {
     return (
       <div className="p-4 text-center text-gray-500">
-        Meal not found. <Link href="/meals" className="text-emerald-600">Back to library</Link>
+        Meal not found. <Link href="/meals" className="text-orange-600">Back to library</Link>
       </div>
     )
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link href="/meals" className="text-gray-400 hover:text-gray-600">
+    <div className="flex flex-col min-h-full">
+      {/* Sticky header */}
+      <div className="glass-strong sticky top-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/meals" className="text-gray-400 hover:text-gray-600 shrink-0">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-xl font-bold text-gray-900 truncate max-w-[200px]">{meal.name}</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-[#FED7AA] font-heading truncate">
+            {editing ? 'Edit Meal' : meal.name}
+          </h1>
         </div>
         {!editing && (
-          <Button variant="secondary" onClick={() => {
-            setEditing(true)
-            setDraftIngredients(
-              ingredients.map((i) => ({ name: i.name, quantity: i.quantity?.toString() ?? '', unit: i.unit ?? '' }))
-            )
-          }}>
+          <button
+            onClick={() => {
+              setEditing(true)
+              setDraftIngredients(
+                ingredients.map((i) => ({ name: i.name, quantity: i.quantity?.toString() ?? '', unit: i.unit ?? '' }))
+              )
+            }}
+            className="shrink-0 text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+          >
             Edit
-          </Button>
+          </button>
         )}
       </div>
 
-      {editing ? (
-        <div className="flex flex-col gap-5">
-          <Input label="Meal name" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Input label="Recipe URL (optional)" type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
+      <div className="p-4 max-w-lg mx-auto w-full">
+        {editing ? (
+          <div className="flex flex-col gap-5">
+            <Input label="Meal name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input label="Recipe URL (optional)" type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
 
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Ingredients</p>
-            <div className="flex flex-col gap-2">
-              {draftIngredients.map((ing, i) => (
-                <IngredientRow
-                  key={i} index={i} value={ing}
-                  onChange={(v) => setDraftIngredients((prev) => prev.map((x, idx) => idx === i ? v : x))}
-                  onRemove={() => setDraftIngredients((prev) => prev.filter((_, idx) => idx !== i))}
-                />
-              ))}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2 font-heading">Ingredients</p>
+              <div className="flex flex-col gap-2">
+                {draftIngredients.map((ing, i) => (
+                  <IngredientRow
+                    key={i} index={i} value={ing}
+                    onChange={(v) => setDraftIngredients((prev) => prev.map((x, idx) => idx === i ? v : x))}
+                    onRemove={() => setDraftIngredients((prev) => prev.filter((_, idx) => idx !== i))}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setDraftIngredients((prev) => [...prev, { name: '', quantity: '', unit: '' }])}
+                className="mt-3 text-sm text-orange-600 font-medium hover:underline flex items-center gap-1"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Add ingredient
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setDraftIngredients((prev) => [...prev, { name: '', quantity: '', unit: '' }])}
-              className="mt-3 text-sm text-emerald-600 font-medium hover:underline flex items-center gap-1"
-            >
-              + Add ingredient
-            </button>
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleSave} loading={saving} className="flex-1">Save changes</Button>
+            </div>
           </div>
+        ) : (
+          <div>
+            {meal.source_url && (
+              <a href={meal.source_url} target="_blank" rel="noopener noreferrer"
+                className="text-sm text-orange-600 hover:underline flex items-center gap-1.5 mb-5">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View original recipe
+              </a>
+            )}
 
-          <div className="flex gap-3 pt-2">
-            <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">Cancel</Button>
-            <Button onClick={handleSave} loading={saving} className="flex-1">Save changes</Button>
-          </div>
-        </div>
-      ) : (
-        <div>
-          {meal.source_url && (
-            <a href={meal.source_url} target="_blank" rel="noopener noreferrer"
-              className="text-sm text-emerald-600 hover:underline flex items-center gap-1 mb-4">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              View original recipe
-            </a>
-          )}
+            <p className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-3 font-heading">
+              Ingredients {ingredients.length > 0 && `· ${ingredients.length}`}
+            </p>
 
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Ingredients ({ingredients.length})
-          </h2>
-
-          {ingredients.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No ingredients added.</p>
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {ingredients.map((ing) => (
-                <li key={ing.id} className="py-2.5 flex items-center justify-between">
-                  <span className="text-sm text-gray-800">{ing.name}</span>
-                  {(ing.quantity || ing.unit) && (
-                    <span className="text-sm text-gray-500">
-                      {ing.quantity ? ing.quantity : ''}{ing.unit ? ` ${ing.unit}` : ''}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            {showDeleteConfirm ? (
-              <div className="bg-red-50 rounded-xl p-4 flex flex-col gap-3">
-                <p className="text-sm text-red-700 font-medium">Delete &ldquo;{meal.name}&rdquo;? This cannot be undone.</p>
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} className="flex-1">Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete} loading={deleting} className="flex-1">Delete</Button>
-                </div>
+            {ingredients.length === 0 ? (
+              <div className="glass rounded-2xl p-6 text-center text-gray-400 text-sm">
+                No ingredients added yet.
               </div>
             ) : (
-              <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="text-red-500 w-full">
-                Delete meal
-              </Button>
+              <ul className="glass rounded-2xl overflow-hidden divide-y divide-gray-100">
+                {ingredients.map((ing) => (
+                  <li key={ing.id} className="py-3 px-4 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">{ing.name}</span>
+                    {(ing.quantity || ing.unit) && (
+                      <span className="text-sm text-gray-500">
+                        {ing.quantity ? ing.quantity : ''}{ing.unit ? ` ${ing.unit}` : ''}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
+
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              {showDeleteConfirm ? (
+                <div className="bg-red-50 rounded-xl p-4 flex flex-col gap-3">
+                  <p className="text-sm text-red-700 font-medium">Delete &ldquo;{meal.name}&rdquo;? This cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} className="flex-1">Cancel</Button>
+                    <Button variant="destructive" onClick={handleDelete} loading={deleting} className="flex-1">Delete</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="text-red-500 w-full">
+                  Delete meal
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

@@ -24,12 +24,12 @@ export function WeekGrid({ slots, familyId, weekStart, weekStartDate, onUpdate, 
     <div className="overflow-x-auto -mx-4 px-4">
       <div className="min-w-[560px]">
         {/* Day headers */}
-        <div className="grid grid-cols-8 gap-1.5 mb-1.5">
-          <div /> {/* spacer for slot label column */}
+        <div className="grid grid-cols-8 gap-1.5 mb-2">
+          <div /> {/* spacer */}
           {DAY_KEYS.map((day, i) => (
             <div key={day} className="text-center">
-              <p className="text-xs font-semibold text-gray-500 uppercase">{day}</p>
-              <p className="text-xs text-gray-400">{weekDays[i].getDate()}</p>
+              <p className="text-[10px] font-bold text-[#7C4A30] uppercase font-heading">{day}</p>
+              <p className="text-[10px] text-[#B8836A]">{weekDays[i].getDate()}</p>
             </div>
           ))}
         </div>
@@ -39,11 +39,10 @@ export function WeekGrid({ slots, familyId, weekStart, weekStartDate, onUpdate, 
           <div key={mealSlot} className="grid grid-cols-8 gap-1.5 mb-1.5">
             {/* Row label */}
             <div className="flex items-center justify-end pr-1.5">
-              <p className="text-xs font-medium text-gray-400 rotate-0 whitespace-nowrap">
+              <p className="text-[10px] font-semibold text-[#B8836A] whitespace-nowrap font-heading">
                 {SLOT_LABELS[mealSlot]}
               </p>
             </div>
-            {/* Cells */}
             {DAY_KEYS.map((day) => (
               <SlotCell
                 key={`${day}-${mealSlot}`}

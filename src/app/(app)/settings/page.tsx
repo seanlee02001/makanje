@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 max-w-lg mx-auto flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-[#FED7AA] font-heading">Settings</h1>
 
       {/* Family name */}
       {family && (
