@@ -62,7 +62,7 @@ export function MealPickerModal({
         {loading ? (
           <div className="flex justify-center py-8"><Spinner /></div>
         ) : (
-          <ul className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+          <ul className="divide-y divide-gray-50">
             {filtered.length === 0 && (
               <li className="py-4 text-center text-sm text-gray-400">
                 {query ? 'No meals match your search.' : 'No meals yet.'}

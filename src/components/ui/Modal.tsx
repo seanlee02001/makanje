@@ -14,8 +14,14 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    if (open) document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    if (open) {
+      document.addEventListener('keydown', handler)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handler)
+      document.body.style.overflow = ''
+    }
   }, [open, onClose])
 
   if (!open) return null
@@ -49,7 +55,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             </button>
           </div>
         )}
-        <div className="overflow-y-auto flex-1 p-4">{children}</div>
+        <div className="overflow-y-auto flex-1 p-4 overscroll-contain">{children}</div>
       </div>
     </div>
   )
