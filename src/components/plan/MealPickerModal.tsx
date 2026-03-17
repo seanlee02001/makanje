@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getMeals, createMeal, addDishToMeal } from '@/lib/supabase/queries/meals'
+import { createMeal, addDishToMeal } from '@/lib/supabase/queries/meals'
 import { getDishes } from '@/lib/supabase/queries/dishes'
 import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
@@ -18,252 +18,184 @@ interface MealPickerModalProps {
   onSelect: (meal: Meal) => void
 }
 
+const SLOT_LABEL: Record<MealSlotType, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+}
+
+const DAY_LABEL: Record<DayOfWeek, string> = {
+  mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu',
+  fri: 'Fri', sat: 'Sat', sun: 'Sun',
+}
+
 export function MealPickerModal({
   open, onClose, familyId, day, mealSlot, onSelect
 }: MealPickerModalProps) {
-  // Pick view
-  const [meals, setMeals] = useState<Meal[]>([])
+  const [dishes, setDishes] = useState<(Dish & { ingredients: { id: string }[] })[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // Create view
-  const [creating, setCreating] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [allDishes, setAllDishes] = useState<Dish[]>([])
-  const [selectedDishIds, setSelectedDishIds] = useState<string[]>([])
-  const [dishQuery, setDishQuery] = useState('')
-  const [loadingDishes, setLoadingDishes] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
+  const [error, setError] = useState('')
 
   const supabase = createClient()
 
-  // Load meals when picker opens
   useEffect(() => {
     if (!open || !familyId) return
-    setCreating(false)
+    setSelectedIds([])
     setQuery('')
+    setError('')
     setLoading(true)
-    getMeals(familyId).then((data) => {
-      const sorted = [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name))
-      setMeals(sorted)
+    getDishes(familyId).then((data) => {
+      setDishes([...data].sort((a, b) => a.name.localeCompare(b.name)))
       setLoading(false)
     })
   }, [open, familyId])
 
-  // Load dishes when switching to create view
-  useEffect(() => {
-    if (!creating || !familyId || allDishes.length > 0) return
-    setLoadingDishes(true)
-    getDishes(familyId)
-      .then((data) => setAllDishes(data ?? []))
-      .finally(() => setLoadingDishes(false))
-  }, [creating, familyId, allDishes.length])
-
-  function openCreate() {
-    setNewName('')
-    setSelectedDishIds([])
-    setDishQuery('')
-    setSaveError('')
-    setCreating(true)
-  }
-
   function toggleDish(id: string) {
-    setSelectedDishIds((prev) =>
+    setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     )
   }
 
-  async function handleCreateMeal() {
-    if (!newName.trim()) return
+  async function handleConfirm() {
+    if (selectedIds.length === 0) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
     setSaving(true)
-    setSaveError('')
+    setError('')
     try {
-      const meal = await createMeal(familyId, newName.trim(), user.id)
-      for (let i = 0; i < selectedDishIds.length; i++) {
-        await addDishToMeal(meal.id, selectedDishIds[i], i)
+      // Auto-name the meal from selected dish names
+      const selected = dishes.filter((d) => selectedIds.includes(d.id))
+      const mealName = selected.map((d) => d.name).join(' · ')
+
+      const meal = await createMeal(familyId, mealName, user.id)
+      for (let i = 0; i < selectedIds.length; i++) {
+        await addDishToMeal(meal.id, selectedIds[i], i)
       }
-      // Add to local list and select it
-      setMeals((prev) => [...prev, meal].sort((a, b) => a.name.localeCompare(b.name)))
       onSelect(meal)
       onClose()
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Could not create meal')
+      setError(err instanceof Error ? err.message : 'Could not save')
       setSaving(false)
     }
   }
 
-  const title = `${day.toUpperCase()} — ${mealSlot.charAt(0).toUpperCase() + mealSlot.slice(1)}`
-  const filtered = meals.filter((m) => m.name.toLowerCase().includes(query.toLowerCase()))
-  const filteredDishes = allDishes.filter((d) => d.name.toLowerCase().includes(dishQuery.toLowerCase()))
-  const selectedDishes = allDishes.filter((d) => selectedDishIds.includes(d.id))
+  const filtered = dishes.filter((d) =>
+    d.name.toLowerCase().includes(query.toLowerCase())
+  )
+
+  const title = `${DAY_LABEL[day]} · ${SLOT_LABEL[mealSlot]}`
 
   return (
-    <Modal open={open} onClose={onClose} title={creating ? 'New Meal' : title}>
-      {creating ? (
-        /* ── Create meal view ── */
-        <div className="flex flex-col gap-4">
-          {/* Back button + name input */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCreating(false)}
-              className="text-gray-400 hover:text-gray-600 shrink-0"
-              aria-label="Back"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <input
-              type="text"
-              placeholder="Meal name (e.g. Sunday Roast)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              autoFocus
-              className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
-            />
+    <Modal open={open} onClose={onClose} title={title}>
+      <div className="flex flex-col gap-3">
+        {/* Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
           </div>
+          <input
+            type="search"
+            placeholder="Search dishes…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoFocus
+            className="w-full rounded-xl border border-gray-200 pl-9 pr-4 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+          />
+        </div>
 
-          {/* Selected dishes summary */}
-          {selectedDishes.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-1.5">
-                Added · {selectedDishes.length}
-              </p>
-              <ul className="flex flex-col gap-0.5">
-                {selectedDishes.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between bg-orange-50 rounded-lg px-3 py-2">
-                    <span className="text-sm font-medium text-orange-800">{d.name}</span>
-                    <button
-                      onClick={() => toggleDish(d.id)}
-                      className="text-orange-400 hover:text-red-500 transition-colors ml-2 shrink-0"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* Selected summary chip */}
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {dishes
+              .filter((d) => selectedIds.includes(d.id))
+              .map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => toggleDish(d.id)}
+                  className="flex items-center gap-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full px-2.5 py-1 hover:bg-orange-200 transition-colors"
+                >
+                  {d.name}
+                  <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ))}
+          </div>
+        )}
 
-          {/* Dish search */}
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Dish Library</p>
-            <input
-              type="search"
-              placeholder="Search dishes…"
-              value={dishQuery}
-              onChange={(e) => setDishQuery(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm mb-2 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
-            />
-            {loadingDishes ? (
-              <div className="flex justify-center py-6"><Spinner /></div>
-            ) : allDishes.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">No dishes yet — add dishes first.</p>
+        {/* Dish list */}
+        {loading ? (
+          <div className="flex justify-center py-8"><Spinner /></div>
+        ) : dishes.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-sm font-semibold text-gray-700">No dishes yet</p>
+            <p className="text-xs text-gray-400 mt-1">Add dishes in the Dishes tab first.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-50 max-h-64 overflow-y-auto -mx-1">
+            {filtered.length === 0 ? (
+              <li className="py-4 text-center text-sm text-gray-400">No dishes match your search.</li>
             ) : (
-              <ul className="divide-y divide-gray-50 max-h-48 overflow-y-auto">
-                {filteredDishes.map((dish) => {
-                  const sel = selectedDishIds.includes(dish.id)
-                  return (
-                    <li key={dish.id}>
-                      <button
-                        onClick={() => toggleDish(dish.id)}
-                        className={`w-full flex items-center justify-between px-2 py-2.5 rounded-lg transition-colors ${
-                          sel ? 'bg-orange-50' : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <span className={`text-sm font-medium ${sel ? 'text-orange-700' : 'text-gray-900'}`}>
+              filtered.map((dish) => {
+                const selected = selectedIds.includes(dish.id)
+                return (
+                  <li key={dish.id}>
+                    <button
+                      onClick={() => toggleDish(dish.id)}
+                      className={`w-full flex items-center justify-between px-3 py-3 transition-colors rounded-lg ${
+                        selected ? 'bg-orange-50' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="text-left">
+                        <p className={`text-sm font-medium ${selected ? 'text-orange-700' : 'text-gray-900'}`}>
                           {dish.name}
-                        </span>
-                        {sel && (
-                          <svg className="h-4 w-4 text-orange-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        </p>
+                        {dish.ingredients.length > 0 && (
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            {dish.ingredients.length} ingredient{dish.ingredients.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${
+                        selected ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                      }`}>
+                        {selected && (
+                          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
-
-          {saveError && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{saveError}</p>
-          )}
-
-          <button
-            onClick={handleCreateMeal}
-            disabled={!newName.trim() || saving}
-            className="w-full rounded-xl bg-orange-500 text-white text-sm font-semibold py-2.5 hover:bg-orange-600 disabled:opacity-40 transition-colors"
-          >
-            {saving ? 'Saving…' : `Save${selectedDishIds.length > 0 ? ` (${selectedDishIds.length} dish${selectedDishIds.length > 1 ? 'es' : ''})` : ''}`}
-          </button>
-        </div>
-      ) : (
-        /* ── Pick meal view ── */
-        <div className="flex flex-col gap-3">
-          <input
-            type="search"
-            placeholder="Search meals…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
-            autoFocus
-          />
-
-          {loading ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {filtered.length === 0 && (
-                <li className="py-4 text-center text-sm text-gray-400">
-                  {query ? 'No meals match your search.' : 'No meals yet.'}
-                </li>
-              )}
-              {filtered.map((meal) => {
-                type MealDishJoin = { sort_order: number; dish?: { name?: string } }
-                const mealDishes: MealDishJoin[] = ((meal as Meal & { meal_dishes?: MealDishJoin[] }).meal_dishes) ?? []
-                const dishNames = mealDishes
-                  .sort((a, b) => a.sort_order - b.sort_order)
-                  .map((md) => md.dish?.name)
-                  .filter((n): n is string => Boolean(n))
-                  .slice(0, 3)
-
-                return (
-                  <li key={meal.id}>
-                    <button
-                      onClick={() => { onSelect(meal); onClose() }}
-                      className="w-full text-left px-2 py-3 rounded-lg hover:bg-orange-50 transition-colors"
-                    >
-                      <p className="text-sm font-medium text-gray-900">{meal.name}</p>
-                      {dishNames.length > 0 && (
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">
-                          {dishNames.join(' · ')}{mealDishes.length > 3 ? ` +${mealDishes.length - 3}` : ''}
-                        </p>
-                      )}
+                      </div>
                     </button>
                   </li>
                 )
-              })}
-            </ul>
-          )}
+              })
+            )}
+          </ul>
+        )}
 
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 text-sm text-orange-600 font-medium hover:underline mt-1 px-2"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Add new meal
-          </button>
-        </div>
-      )}
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        {/* Confirm button */}
+        <button
+          onClick={handleConfirm}
+          disabled={selectedIds.length === 0 || saving}
+          className="w-full rounded-xl bg-orange-500 text-white text-sm font-semibold py-2.5 hover:bg-orange-600 disabled:opacity-40 transition-colors mt-1"
+        >
+          {saving
+            ? 'Adding…'
+            : selectedIds.length === 0
+            ? 'Select dishes to add'
+            : `Add ${selectedIds.length} dish${selectedIds.length > 1 ? 'es' : ''} to plan`}
+        </button>
+      </div>
     </Modal>
   )
 }
