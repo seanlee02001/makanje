@@ -15,7 +15,7 @@ export function useRealtimeSlots(familyId: string | null, weekStart: string) {
     // Initial fetch
     supabase
       .from('meal_plan_slots')
-      .select('*, meal:meals(*)')
+      .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*)))')
       .eq('family_id', familyId)
       .eq('week_start_date', weekStart)
       .then(({ data }) => {
@@ -41,7 +41,7 @@ export function useRealtimeSlots(familyId: string | null, weekStart: string) {
             // Fetch the full row with meal join on INSERT/UPDATE
             const { data: updated } = await supabase
               .from('meal_plan_slots')
-              .select('*, meal:meals(*)')
+              .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*)))')
               .eq('id', (payload.new as MealPlanSlot).id)
               .single()
             if (updated) {

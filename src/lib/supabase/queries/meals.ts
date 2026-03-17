@@ -1,75 +1,102 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Meal, Ingredient } from '@/lib/supabase/types'
+import type { Meal, Dish } from '@/lib/supabase/types'
 
-export async function listMeals(familyId: string): Promise<Meal[]> {
+// --- Dishes ---
+
+export async function getDishes(familyId: string) {
   const supabase = createClient()
-  const { data } = await supabase
-    .from('meals')
+  const { data, error } = await supabase
+    .from('dishes')
     .select('*')
     .eq('family_id', familyId)
     .order('created_at', { ascending: false })
-  return data ?? []
+  if (error) throw error
+  return data as Dish[]
 }
 
-export async function getMeal(id: string): Promise<Meal | null> {
+export async function getDishWithIngredients(dishId: string) {
   const supabase = createClient()
-  const { data } = await supabase.from('meals').select('*').eq('id', id).single()
+  const { data, error } = await supabase
+    .from('dishes')
+    .select('*, ingredients(*)')
+    .eq('id', dishId)
+    .single()
+  if (error) throw error
   return data
 }
 
-export async function createMeal(
-  familyId: string,
-  name: string,
-  sourceUrl?: string,
-  createdBy?: string
-): Promise<Meal | null> {
+export async function createDish(familyId: string, name: string, sourceUrl: string | null, createdBy: string) {
   const supabase = createClient()
-  const { data } = await supabase
-    .from('meals')
-    .insert({ family_id: familyId, name, source_url: sourceUrl ?? null, created_by: createdBy ?? null })
+  const { data, error } = await supabase
+    .from('dishes')
+    .insert({ family_id: familyId, name, source_url: sourceUrl, created_by: createdBy })
     .select()
     .single()
+  if (error) throw error
+  return data as Dish
+}
+
+export async function deleteDish(dishId: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from('dishes').delete().eq('id', dishId)
+  if (error) throw error
+}
+
+// --- Meals (collections) ---
+
+export async function getMeals(familyId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('meals')
+    .select('*, meal_dishes(dish_id, sort_order, dish:dishes(*))')
+    .eq('family_id', familyId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data as Meal[]
+}
+
+export async function getMealWithDishes(mealId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('meals')
+    .select('*, meal_dishes(*, dish:dishes(*, ingredients(*)))')
+    .eq('id', mealId)
+    .single()
+  if (error) throw error
   return data
 }
 
-export async function updateMeal(
-  id: string,
-  updates: { name?: string; source_url?: string | null }
-): Promise<void> {
+export async function createMeal(familyId: string, name: string, createdBy: string) {
   const supabase = createClient()
-  await supabase.from('meals').update(updates).eq('id', id)
+  const { data, error } = await supabase
+    .from('meals')
+    .insert({ family_id: familyId, name, created_by: createdBy })
+    .select()
+    .single()
+  if (error) throw error
+  return data as Meal
 }
 
-export async function deleteMeal(id: string): Promise<void> {
+export async function addDishToMeal(mealId: string, dishId: string, sortOrder = 0) {
   const supabase = createClient()
-  await supabase.from('meals').delete().eq('id', id)
+  const { error } = await supabase
+    .from('meal_dishes')
+    .insert({ meal_id: mealId, dish_id: dishId, sort_order: sortOrder })
+  if (error) throw error
 }
 
-export async function listIngredients(mealId: string): Promise<Ingredient[]> {
+export async function removeDishFromMeal(mealId: string, dishId: string) {
   const supabase = createClient()
-  const { data } = await supabase
-    .from('ingredients')
-    .select('*')
+  const { error } = await supabase
+    .from('meal_dishes')
+    .delete()
     .eq('meal_id', mealId)
-    .order('id')
-  return data ?? []
+    .eq('dish_id', dishId)
+  if (error) throw error
 }
 
-export async function upsertIngredients(
-  mealId: string,
-  ingredients: Array<{ name: string; quantity?: number | null; unit?: string | null }>
-): Promise<void> {
+export async function deleteMeal(mealId: string) {
   const supabase = createClient()
-  // Delete existing then insert fresh
-  await supabase.from('ingredients').delete().eq('meal_id', mealId)
-  if (ingredients.length > 0) {
-    await supabase.from('ingredients').insert(
-      ingredients.map((i) => ({
-        meal_id: mealId,
-        name: i.name,
-        quantity: i.quantity ?? null,
-        unit: i.unit ?? null,
-      }))
-    )
-  }
+  const { error } = await supabase.from('meals').delete().eq('id', mealId)
+  if (error) throw error
 }

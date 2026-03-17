@@ -3,35 +3,35 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { getMeals } from '@/lib/supabase/queries/meals'
-import { MealCard } from '@/components/meals/MealCard'
-import type { Meal } from '@/lib/supabase/types'
+import { getDishes } from '@/lib/supabase/queries/dishes'
+import { DishCard } from '@/components/meals/DishCard'
+import type { Dish } from '@/lib/supabase/types'
 
-export default function MealsPage() {
-  const [meals, setMeals] = useState<Meal[]>([])
+type DishWithCount = Dish & { ingredients: { id: string }[] }
+
+export default function DishesPage() {
+  const [dishes, setDishes] = useState<DishWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
-    async function loadMeals() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
       const { data: profile } = await supabase
         .from('users').select('family_id').eq('id', user.id).single()
       if (!profile?.family_id) return
-
-      const data = await getMeals(profile.family_id)
-      setMeals(data ?? [])
+      const data = await getDishes(profile.family_id)
+      setDishes(data)
       setLoading(false)
     }
-    loadMeals()
+    load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const filtered = meals.filter((m) =>
-    m.name.toLowerCase().includes(query.toLowerCase())
+  const filtered = dishes.filter((d) =>
+    d.name.toLowerCase().includes(query.toLowerCase())
   )
 
   return (
@@ -39,24 +39,23 @@ export default function MealsPage() {
       {/* Sticky glass header */}
       <div className="glass-strong sticky top-0 z-20 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">
-            Meal Library
-          </h1>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dishes"
-              className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors px-2 py-1"
-            >
-              Dishes
+          <div className="flex items-center gap-3">
+            <Link href="/meals" className="text-gray-400 hover:text-gray-600">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
             </Link>
-            <Link
-              href="/meals/new"
-              className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-xl hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/30"
-              aria-label="Add meal"
-            >
-              +
-            </Link>
+            <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">
+              Dish Library
+            </h1>
           </div>
+          <Link
+            href="/dishes/new"
+            className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-xl hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/30"
+            aria-label="Add dish"
+          >
+            +
+          </Link>
         </div>
 
         {/* Search bar */}
@@ -68,7 +67,7 @@ export default function MealsPage() {
           </div>
           <input
             type="search"
-            placeholder="Search meals…"
+            placeholder="Search dishes…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full glass rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 dark:text-orange-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30"
@@ -76,23 +75,10 @@ export default function MealsPage() {
         </div>
       </div>
 
-      {/* Manage Dishes link */}
-      <div className="mx-4 mt-3 mb-1">
-        <Link
-          href="/dishes"
-          className="flex items-center gap-2 text-sm text-orange-600 font-medium hover:underline"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          Manage Dishes →
-        </Link>
-      </div>
-
-      {/* Import banner — solid vivid orange */}
+      {/* Import from URL banner */}
       <div className="mx-4 my-3">
         <Link
-          href="/meals/import"
+          href="/dishes/import"
           className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-400 shadow-md shadow-orange-500/30 hover:shadow-orange-500/50 transition-all active:scale-[0.98]"
         >
           <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -108,7 +94,7 @@ export default function MealsPage() {
         </Link>
       </div>
 
-      {/* Meal grid */}
+      {/* Dish grid */}
       <div className="px-4 pb-6 flex-1">
         {loading ? (
           <div className="flex justify-center py-12">
@@ -125,19 +111,21 @@ export default function MealsPage() {
               <>
                 <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
                   <svg className="h-7 w-7 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a7 7 0 017 7c0 3.5-2 6-4 7v2H9v-2c-2-1-4-3.5-4-7a7 7 0 017-7z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 21h6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 2v5M9.5 2v5M7 7c0 1 .5 1.5 1.25 1.5S9.5 8 9.5 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 8.5V22" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 2c0 0 3 3 3 6h-3V2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 8v14" />
                   </svg>
                 </div>
-                <p className="font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">No meals yet</p>
-                <p className="text-sm mt-1 text-[#92400E]">Add your first meal to get started.</p>
+                <p className="font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">No dishes yet</p>
+                <p className="text-sm mt-1 text-[#92400E]">Add your first dish or import a recipe.</p>
               </>
             )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {filtered.map((meal) => (
-              <MealCard key={meal.id} meal={meal} />
+            {filtered.map((dish) => (
+              <DishCard key={dish.id} dish={dish} />
             ))}
           </div>
         )}

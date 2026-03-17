@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { createDish } from '@/lib/supabase/queries/dishes'
 import { IngredientRow, type IngredientDraft } from '@/components/meals/IngredientRow'
 
-export default function ImportMealPage() {
+export default function ImportDishPage() {
   const [url, setUrl] = useState('')
   const [fetching, setFetching] = useState(false)
   const [fetchError, setFetchError] = useState('')
@@ -73,17 +74,14 @@ export default function ImportMealPage() {
         .from('users').select('family_id').eq('id', user.id).single()
       if (!profile?.family_id) { setError('No family found'); return }
 
-      const { data: dish, error: dishErr } = await supabase
-        .from('dishes')
-        .insert({
-          family_id: profile.family_id,
-          name: name.trim(),
-          source_url: url.trim() || null,
-          created_by: user.id,
-        })
-        .select().single()
+      const dish = await createDish({
+        familyId: profile.family_id,
+        name: name.trim(),
+        sourceUrl: url.trim() || null,
+        createdBy: user.id,
+      })
 
-      if (dishErr || !dish) { setError(dishErr?.message ?? 'Could not save dish'); return }
+      if (!dish) { setError('Could not save dish'); return }
 
       const valid = ingredients.filter((i) => i.name.trim())
       if (valid.length > 0) {
@@ -111,7 +109,7 @@ export default function ImportMealPage() {
     <div className="flex flex-col min-h-full px-4 pt-5 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
-        <Link href="/meals" className="text-gray-400 hover:text-gray-600">
+        <Link href="/dishes" className="text-gray-400 hover:text-gray-600">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
@@ -128,7 +126,6 @@ export default function ImportMealPage() {
 
       {step === 'url' ? (
         <form onSubmit={handleFetch} className="flex flex-col gap-4">
-          {/* URL input */}
           <div className="glass rounded-2xl flex items-center px-3 py-3 gap-2">
             <svg className="h-4 w-4 text-orange-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1" />
@@ -160,10 +157,6 @@ export default function ImportMealPage() {
         </form>
       ) : (
         <form id="review-form" onSubmit={handleSave} className="flex flex-col gap-4">
-          <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-sm text-orange-700">
-            Recipe saved as a <strong>dish</strong>. Add it to a meal from the Dishes page.
-          </div>
-
           {parseFailed && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
               We couldn&apos;t fully parse this recipe. Please fill in the details below.
@@ -180,7 +173,6 @@ export default function ImportMealPage() {
               </span>
             </div>
 
-            {/* Meal name */}
             <input
               type="text"
               value={name}
@@ -254,7 +246,7 @@ export default function ImportMealPage() {
             disabled={saving}
             className="w-full py-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-semibold font-heading text-sm transition-colors disabled:opacity-50 shadow-md shadow-orange-500/30"
           >
-            {saving ? 'Saving…' : 'Save as Dish'}
+            {saving ? 'Saving…' : 'Save to Dish Library'}
           </button>
         </div>
       )}

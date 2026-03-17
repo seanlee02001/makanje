@@ -14,7 +14,8 @@ export interface User {
   family_id: string | null
 }
 
-export interface Meal {
+// A single recipe with its own ingredients
+export interface Dish {
   id: string
   family_id: string
   name: string
@@ -25,10 +26,29 @@ export interface Meal {
 
 export interface Ingredient {
   id: string
-  meal_id: string
+  dish_id: string
   name: string
   quantity: number | null
   unit: string | null
+}
+
+export type DishWithIngredients = Dish & { ingredients: Ingredient[] }
+
+// A named collection of dishes served together
+export interface Meal {
+  id: string
+  family_id: string
+  name: string
+  created_by: string | null
+  created_at: string
+  dishes?: DishWithIngredients[]  // populated via join
+}
+
+export interface MealDish {
+  id: string
+  meal_id: string
+  dish_id: string
+  sort_order: number
 }
 
 export interface MealPlanSlot {
@@ -41,11 +61,21 @@ export interface MealPlanSlot {
   meal?: Meal | null
 }
 
+export interface PantryItem {
+  id: string
+  family_id: string
+  name: string
+  quantity: number | null
+  unit: string | null
+  updated_at: string
+}
+
 export interface ShoppingItem {
   name: string
   quantity: number | null
   unit: string | null
   checked: boolean
+  store_section?: string
   source?: string
   manual?: boolean
 }
@@ -55,6 +85,5 @@ export interface ShoppingList {
   family_id: string
   week_start_date: string
   items: ShoppingItem[]
+  share_token: string | null
 }
-
-export type MealWithIngredients = Meal & { ingredients: Ingredient[] }

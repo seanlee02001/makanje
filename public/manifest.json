@@ -4,8 +4,8 @@
   "description": "Plan family meals, build shopping lists, and share recipes.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#059669",
+  "background_color": "#fff7ed",
+  "theme_color": "#F97316",
   "orientation": "portrait-primary",
   "icons": [
     {

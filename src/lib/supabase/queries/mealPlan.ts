@@ -8,7 +8,7 @@ export async function getWeekSlots(
   const supabase = createClient()
   const { data } = await supabase
     .from('meal_plan_slots')
-    .select('*, meal:meals(*)')
+    .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*)))')
     .eq('family_id', familyId)
     .eq('week_start_date', weekStart)
   return (data as MealPlanSlot[]) ?? []

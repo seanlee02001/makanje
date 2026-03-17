@@ -23,8 +23,12 @@ const NAV = [
     activeColor: 'text-orange-600',
     icon: (active: boolean) => (
       <svg className={cn('h-[22px] w-[22px]', active ? 'text-orange-600' : 'text-[#B8836A]')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path d="M12 2a7 7 0 017 7c0 3.5-2 6-4 7v2H9v-2c-2-1-4-3.5-4-7a7 7 0 017-7z" />
-        <path d="M9 21h6" />
+        {/* Fork */}
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 2v5M9.5 2v5M7 7c0 1 .5 1.5 1.25 1.5S9.5 8 9.5 7" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 8.5V22" />
+        {/* Knife */}
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 2c0 0 3 3 3 6h-3V2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 8v14" />
       </svg>
     ),
   },
@@ -36,6 +40,17 @@ const NAV = [
       <svg className={cn('h-[22px] w-[22px]', active ? 'text-emerald-600' : 'text-[#B8836A]')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
         <path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
         <path d="M3 6h18M16 10a4 4 0 01-8 0" />
+      </svg>
+    ),
+  },
+  {
+    href: '/pantry',
+    label: 'Pantry',
+    activeColor: 'text-orange-600',
+    icon: (active: boolean) => (
+      <svg className={cn('h-[22px] w-[22px]', active ? 'text-orange-600' : 'text-[#B8836A]')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18M3 15h18" />
       </svg>
     ),
   },
@@ -57,6 +72,8 @@ const BG_MAP: Record<string, string> = {
   '/plan':     'bg-plan',
   '/meals':    'bg-meals',
   '/shopping': 'bg-shopping',
+  '/pantry':   'bg-plan',
+  '/dishes':   'bg-meals',
   '/settings': 'bg-settings',
 }
 

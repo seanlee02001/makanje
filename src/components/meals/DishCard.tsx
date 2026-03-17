@@ -1,19 +1,19 @@
 import Link from 'next/link'
-import type { Meal } from '@/lib/supabase/types'
+import type { Dish } from '@/lib/supabase/types'
 
-export function MealCard({ meal }: { meal: Meal }) {
-  // meal_dishes is loaded via join in getMeals query
-  type MealDishJoin = { sort_order: number; dish?: { name?: string } }
-  const mealDishes: MealDishJoin[] = ((meal as Meal & { meal_dishes?: MealDishJoin[] }).meal_dishes) ?? []
-  const dishNames: string[] = mealDishes
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((md) => md.dish?.name)
-    .filter((n): n is string => Boolean(n))
-    .slice(0, 3)
+interface Props {
+  dish: Dish & { ingredients?: { id: string }[] }
+}
+
+export function DishCard({ dish }: Props) {
+  const domain = dish.source_url
+    ? (() => { try { return new URL(dish.source_url).hostname.replace('www.', '') } catch { return null } })()
+    : null
+  const ingredientCount = dish.ingredients?.length ?? 0
 
   return (
     <Link
-      href={`/meals/${meal.id}`}
+      href={`/dishes/${dish.id}`}
       className="glass rounded-2xl p-4 flex flex-col gap-2.5 hover:brightness-95 transition-all active:scale-[0.97] shadow-sm"
     >
       <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center shadow-sm">
@@ -26,15 +26,18 @@ export function MealCard({ meal }: { meal: Meal }) {
       </div>
       <div>
         <p className="font-bold text-[#0F172A] dark:text-[#FED7AA] line-clamp-2 text-sm font-heading leading-snug">
-          {meal.name}
+          {dish.name}
         </p>
-        {dishNames.length > 0 ? (
-          <p className="text-xs text-slate-500 dark:text-orange-200/60 mt-1 truncate font-medium">
-            {dishNames.join(' · ')}{mealDishes.length > 3 ? ` +${mealDishes.length - 3}` : ''}
-          </p>
-        ) : (
-          <p className="text-xs text-orange-400 mt-1 font-medium">No dishes yet</p>
-        )}
+        <div className="flex items-center gap-2 mt-1">
+          {ingredientCount > 0 && (
+            <span className="text-xs text-orange-600 font-semibold">
+              {ingredientCount} ingredient{ingredientCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {domain && (
+            <span className="text-xs text-slate-500 dark:text-orange-200/60 truncate font-medium">{domain}</span>
+          )}
+        </div>
       </div>
     </Link>
   )

@@ -109,13 +109,18 @@ export default function PlanPage() {
     try {
       const { data: slotsWithIngredients } = await supabase
         .from('meal_plan_slots')
-        .select('*, meal:meals(*, ingredients(*))')
+        .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*, ingredients(*))))')
         .eq('family_id', familyId)
         .eq('week_start_date', weekStart)
 
+      const { data: pantryItems } = await supabase
+        .from('pantry_items')
+        .select('*')
+        .eq('family_id', familyId)
+
       const { generateShoppingList } = await import('@/lib/utils/generateShoppingList')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const items = generateShoppingList((slotsWithIngredients as any) ?? [])
+      const items = generateShoppingList((slotsWithIngredients as any) ?? [], pantryItems ?? [])
 
       await supabase
         .from('shopping_lists')
