@@ -18,8 +18,8 @@ const NAV = [
     ),
   },
   {
-    href: '/meals',
-    label: 'Meals',
+    href: '/dishes',
+    label: 'Dishes',
     activeColor: 'text-orange-600',
     icon: (active: boolean) => (
       <svg className={cn('h-[22px] w-[22px]', active ? 'text-orange-600' : 'text-[#B8836A]')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>

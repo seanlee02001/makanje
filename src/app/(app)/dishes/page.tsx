@@ -39,16 +39,9 @@ export default function DishesPage() {
       {/* Sticky glass header */}
       <div className="glass-strong sticky top-0 z-20 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <Link href="/meals" className="text-gray-400 hover:text-gray-600">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">
-              Dish Library
-            </h1>
-          </div>
+          <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">
+            Dishes
+          </h1>
           <Link
             href="/dishes/new"
             className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-xl hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/30"
