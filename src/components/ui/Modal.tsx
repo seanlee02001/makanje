@@ -8,10 +8,11 @@ interface ModalProps {
   onClose: () => void
   title?: string
   children: ReactNode
+  footer?: ReactNode
   className?: string
 }
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, className }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (open) {
@@ -27,22 +28,23 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
       {/* Scrim */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[6px]"
         onClick={onClose}
       />
-      {/* Glass panel */}
+      {/* Panel */}
       <div
         className={cn(
           'relative w-full sm:max-w-lg bg-white border border-gray-200',
-          'rounded-t-[28px] sm:rounded-[24px] shadow-2xl max-h-[90vh] flex flex-col',
+          'rounded-t-[28px] sm:rounded-[24px] shadow-2xl h-full sm:h-auto sm:max-h-[90vh] flex flex-col',
           className
         )}
       >
+        {/* Header */}
         {title && (
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-5 py-4">
             <h2 className="text-base font-bold text-gray-900 font-heading">{title}</h2>
             <button
               onClick={onClose}
@@ -55,7 +57,16 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             </button>
           </div>
         )}
-        <div className="overflow-y-auto flex-1 p-4 overscroll-contain">{children}</div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-4 overscroll-contain">{children}</div>
+
+        {/* Pinned footer — outside the scroll area */}
+        {footer && (
+          <div className="flex-shrink-0 px-4 pb-6 pt-3 border-t border-gray-100">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )
