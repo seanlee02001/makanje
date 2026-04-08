@@ -81,6 +81,32 @@ export default function TodayPage() {
     await setSlotDishes(slot.id, dishIds)
   }, [familyId, weekStart, pickerDay, pickerSlot])
 
+  async function handleGenerateShoppingList() {
+    if (!familyId) return
+    const { data: slotsWithIngredients } = await supabase
+      .from('meal_plan_slots')
+      .select('*, slot_dishes(*, dish:dishes(*, ingredients(*)))')
+      .eq('family_id', familyId)
+      .eq('week_start_date', weekStart)
+
+    const { data: pantryItems } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('family_id', familyId)
+
+    const { generateShoppingList } = await import('@/lib/utils/generateShoppingList')
+    const items = generateShoppingList(slotsWithIngredients ?? [], pantryItems ?? [])
+
+    await supabase
+      .from('shopping_lists')
+      .upsert(
+        { family_id: familyId, week_start_date: weekStart, items },
+        { onConflict: 'family_id,week_start_date' }
+      )
+
+    router.push('/shopping')
+  }
+
   if (profileLoading) {
     return <div className="flex justify-center items-center h-40"><Spinner /></div>
   }
@@ -255,6 +281,14 @@ export default function TodayPage() {
                   )
                 })}
               </div>
+
+              <button
+                onClick={handleGenerateShoppingList}
+                className="w-full py-3 rounded-pill text-white font-semibold text-sm mt-4"
+                style={{ background: 'var(--accent)' }}
+              >
+                Generate Shopping List
+              </button>
             </div>
           </>
         )}
