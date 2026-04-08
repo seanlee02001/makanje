@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { MealPlanSlot } from '@/lib/supabase/types'
 
+const SLOT_SELECT = '*, slot_dishes(*, dish:dishes(*, ingredients(*)))'
+
 export function useRealtimeSlots(familyId: string | null, weekStart: string) {
   const [slots, setSlots] = useState<MealPlanSlot[]>([])
   const [loading, setLoading] = useState(true)
@@ -12,18 +14,17 @@ export function useRealtimeSlots(familyId: string | null, weekStart: string) {
   useEffect(() => {
     if (!familyId) return
 
-    // Initial fetch
     supabase
       .from('meal_plan_slots')
-      .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*)))')
+      .select(SLOT_SELECT)
       .eq('family_id', familyId)
       .eq('week_start_date', weekStart)
+      .order('sort_order', { referencedTable: 'slot_dishes', ascending: true })
       .then(({ data }) => {
         setSlots((data as MealPlanSlot[]) ?? [])
         setLoading(false)
       })
 
-    // Realtime subscription
     const channel = supabase
       .channel(`slots-${familyId}-${weekStart}`)
       .on(
@@ -38,10 +39,9 @@ export function useRealtimeSlots(familyId: string | null, weekStart: string) {
           if (payload.eventType === 'DELETE') {
             setSlots((prev) => prev.filter((s) => s.id !== (payload.old as MealPlanSlot).id))
           } else {
-            // Fetch the full row with meal join on INSERT/UPDATE
             const { data: updated } = await supabase
               .from('meal_plan_slots')
-              .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*)))')
+              .select(SLOT_SELECT)
               .eq('id', (payload.new as MealPlanSlot).id)
               .single()
             if (updated) {
@@ -53,6 +53,24 @@ export function useRealtimeSlots(familyId: string | null, weekStart: string) {
               })
             }
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slot_dishes',
+        },
+        async () => {
+          // Refetch all slots when slot_dishes change
+          const { data } = await supabase
+            .from('meal_plan_slots')
+            .select(SLOT_SELECT)
+            .eq('family_id', familyId)
+            .eq('week_start_date', weekStart)
+            .order('sort_order', { referencedTable: 'slot_dishes', ascending: true })
+          setSlots((data as MealPlanSlot[]) ?? [])
         }
       )
       .subscribe()
