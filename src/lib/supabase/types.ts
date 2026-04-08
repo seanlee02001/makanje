@@ -1,5 +1,6 @@
 export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
 export type MealSlotType = 'breakfast' | 'lunch' | 'dinner'
+export type StoreSection = 'produce' | 'meat' | 'seafood' | 'dairy' | 'bakery' | 'pantry' | 'frozen' | 'other'
 
 export interface Family {
   id: string
@@ -14,7 +15,6 @@ export interface User {
   family_id: string | null
 }
 
-// A single recipe with its own ingredients
 export interface Dish {
   id: string
   family_id: string
@@ -22,6 +22,10 @@ export interface Dish {
   source_url: string | null
   created_by: string | null
   created_at: string
+  tags: string[]
+  prep_time_min: number | null
+  servings: number | null
+  instructions: { step: number; text: string }[]
 }
 
 export interface Ingredient {
@@ -30,25 +34,17 @@ export interface Ingredient {
   name: string
   quantity: number | null
   unit: string | null
+  store_section: StoreSection | null
 }
 
 export type DishWithIngredients = Dish & { ingredients: Ingredient[] }
 
-// A named collection of dishes served together
-export interface Meal {
+export interface SlotDish {
   id: string
-  family_id: string
-  name: string
-  created_by: string | null
-  created_at: string
-  dishes?: DishWithIngredients[]  // populated via join
-}
-
-export interface MealDish {
-  id: string
-  meal_id: string
+  slot_id: string
   dish_id: string
   sort_order: number
+  dish?: DishWithIngredients
 }
 
 export interface MealPlanSlot {
@@ -57,8 +53,7 @@ export interface MealPlanSlot {
   week_start_date: string
   day: DayOfWeek
   meal_slot: MealSlotType
-  meal_id: string | null
-  meal?: Meal | null
+  slot_dishes?: SlotDish[]
 }
 
 export interface PantryItem {
