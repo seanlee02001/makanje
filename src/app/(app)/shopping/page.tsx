@@ -76,7 +76,7 @@ export default function ShoppingPage() {
 
   const items = list?.items ?? []
   const total = items.length
-  const doneCount = items.filter((i) => i.checked).length
+
   const unchecked = items.filter((i) => !i.checked)
   const checked = items.filter((i) => i.checked)
 

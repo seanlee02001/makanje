@@ -1,0 +1,7 @@
+[   35248ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://hprhsmzhfjyhqshciqii.supabase.co/auth/v1/signup:0
+[   35250ms] [ERROR] TypeError: Failed to fetch
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/lib/helpers.js:120:25)
+    at _handleRequest (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:106:24)
+    at _request (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/lib/fetch.js:96:24)
+    at SupabaseAuthClient.signUp (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:561:81)
+    at async handleSubmit (webpack-internal:///(app-pages-browser)/./src/app/(auth)/login/page.tsx:47:46) @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:32

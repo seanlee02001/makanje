@@ -487,7 +487,6 @@ export default function DishDetailPage() {
                   style={{
                     background: 'var(--surface)',
                     borderColor: 'var(--border)',
-                    divideColor: 'var(--border)',
                   }}
                 >
                   {ingredients.map((ing) => (

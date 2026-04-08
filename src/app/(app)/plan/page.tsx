@@ -17,7 +17,7 @@ import {
   SLOT_KEYS,
   SLOT_LABELS,
 } from '@/lib/utils/weekDates'
-import type { MealPlanSlot, DayOfWeek, MealSlotType } from '@/lib/supabase/types'
+import type { DayOfWeek, MealSlotType } from '@/lib/supabase/types'
 
 const SLOT_DOT_COLORS: Record<MealSlotType, string> = {
   breakfast: 'var(--breakfast)',

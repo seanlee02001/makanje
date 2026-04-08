@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "MakanJe" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Your family's weekly meal plan
+    - generic [ref=e7]:
+      - heading "Welcome back" [level=2] [ref=e8]
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Email
+          - textbox "you@example.com" [ref=e12]: sean@test.com
+        - generic [ref=e13]:
+          - generic [ref=e14]: Password
+          - textbox "••••••••" [ref=e15]: password123
+        - paragraph [ref=e21]: Failed to fetch
+        - button "Sign in" [ref=e16] [cursor=pointer]
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: New to MakanJe?
+        - button "Create a Family Account" [ref=e19] [cursor=pointer]
+  - alert [ref=e20]

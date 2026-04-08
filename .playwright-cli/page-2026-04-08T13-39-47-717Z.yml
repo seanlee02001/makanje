@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "MakanJe" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Your family's weekly meal plan
+    - generic [ref=e7]:
+      - heading "Set up your family" [level=2] [ref=e8]
+      - paragraph [ref=e9]: Create a new family plan or join an existing one.
+      - generic [ref=e10]:
+        - button "Create family" [ref=e11] [cursor=pointer]
+        - button "Join family" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: Family name
+          - textbox "Family name" [ref=e16]:
+            - /placeholder: The Smiths
+        - button "Create family" [ref=e17] [cursor=pointer]
+  - alert [ref=e18]

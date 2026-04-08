@@ -1,0 +1,186 @@
+- generic [active] [ref=e1]:
+  - heading "MakanJe — Notion-Inspired" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Clean, modern, gets out of the way. Pick the one that feels right.
+  - generic [ref=e4]:
+    - generic [ref=e5] [cursor=pointer]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: A
+        - generic [ref=e9]: Pure Notion
+      - generic [ref=e10]: Page-style layout. Emoji page icon, clean text hierarchy, whisper-thin dividers. The app feels like a well-organized Notion page. Maximum restraint.
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: 🍽
+          - generic [ref=e14]: Today
+          - generic [ref=e15]: Tuesday, 8 April
+        - generic [ref=e16]:
+          - generic [ref=e17]: Meals
+          - generic [ref=e18]:
+            - generic [ref=e19]: Bfast
+            - generic [ref=e20]:
+              - generic [ref=e21]: Nasi Lemak
+              - generic [ref=e22]: Sambal, egg, ikan bilis
+              - generic [ref=e23]: Quick
+          - generic [ref=e24]:
+            - generic [ref=e25]: Lunch
+            - generic [ref=e26]:
+              - generic [ref=e27]: Chicken Rice
+              - generic [ref=e28]: Steamed, chili sauce, cucumber
+          - generic [ref=e29]:
+            - generic [ref=e30]: Dinner
+            - generic [ref=e31]:
+              - generic [ref=e32]: Pasta Bolognese
+              - generic [ref=e33]: Pasta, green salad, garlic bread
+              - generic [ref=e34]: Family fav
+        - generic [ref=e35]:
+          - generic [ref=e36]: This Week
+          - generic [ref=e37]:
+            - generic [ref=e38]: Wed
+            - generic [ref=e39]: Roti Canai · Laksa · Rendang
+          - generic [ref=e44]:
+            - generic [ref=e45]: Thu
+            - generic [ref=e46]: No meals planned
+          - generic [ref=e51]:
+            - generic [ref=e52]: Fri
+            - generic [ref=e53]: Char Kuey Teow · Satay
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]: 📅
+            - text: Today
+          - generic [ref=e61]:
+            - generic [ref=e62]: 📖
+            - text: Dishes
+          - generic [ref=e63]:
+            - generic [ref=e64]: 🛒
+            - text: Shop
+          - generic [ref=e65]:
+            - generic [ref=e66]: 📦
+            - text: Pantry
+          - generic [ref=e67]:
+            - generic [ref=e68]: ⚙️
+            - text: More
+    - generic [ref=e69] [cursor=pointer]:
+      - generic [ref=e70]:
+        - generic [ref=e71]: B
+        - generic [ref=e73]: Notion + Structure
+      - generic [ref=e74]: Notion clarity with subtle color indicators per meal slot. Thin border cards, whisper dividers. A little more visual structure without losing the minimalism.
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: Tuesday, 8 April
+          - generic [ref=e78]: S
+        - generic [ref=e79]: Today
+        - generic [ref=e80]:
+          - generic [ref=e81]: Meals
+          - generic [ref=e82]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: Breakfast
+              - generic [ref=e86]: Nasi Lemak
+              - generic [ref=e87]: Sambal, egg, ikan bilis
+            - generic [ref=e88]: ›
+          - generic [ref=e89]:
+            - generic [ref=e91]:
+              - generic [ref=e92]: Lunch
+              - generic [ref=e93]: Chicken Rice
+              - generic [ref=e94]: Steamed, chili sauce
+            - generic [ref=e95]: ›
+          - generic [ref=e96]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: Dinner
+              - generic [ref=e100]: Pasta Bolognese
+              - generic [ref=e101]: 3 dishes · Family fav
+            - generic [ref=e102]: ›
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: This Week
+            - generic [ref=e107]: View grid →
+          - generic [ref=e108]:
+            - generic [ref=e109]: Wed
+            - generic [ref=e110]: Roti Canai · Laksa · Rendang
+          - generic [ref=e111]:
+            - generic [ref=e112]: Thu
+            - generic [ref=e113]: Not planned
+          - generic [ref=e114]:
+            - generic [ref=e115]: Fri
+            - generic [ref=e116]: Char Kuey Teow · Satay
+          - generic [ref=e117]:
+            - generic [ref=e118]: Sat
+            - generic [ref=e119]: Sunday Roast (3 dishes)
+        - generic [ref=e120]:
+          - generic [ref=e121]:
+            - generic [ref=e122]: 📅
+            - text: Today
+          - generic [ref=e123]:
+            - generic [ref=e124]: 📖
+            - text: Dishes
+          - generic [ref=e125]:
+            - generic [ref=e126]: 🛒
+            - text: Shop
+          - generic [ref=e127]:
+            - generic [ref=e128]: 📦
+            - text: Pantry
+          - generic [ref=e129]:
+            - generic [ref=e130]: ⚙️
+            - text: More
+    - generic [ref=e131] [cursor=pointer]:
+      - generic [ref=e132]:
+        - generic [ref=e133]: C
+        - generic [ref=e135]: Notion + Timeline
+      - generic [ref=e136]: Dashboard feel with stats at top, today as a timeline, and a "Start cooking" action. More opinionated, but still clean and content-first.
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e139]: MakanJe
+          - generic [ref=e140]:
+            - generic [ref=e141]: 🔍
+            - generic [ref=e142]: ＋
+        - generic [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e145]: "3"
+            - generic [ref=e146]: meals today
+          - generic [ref=e147]:
+            - generic [ref=e148]: 5/7
+            - generic [ref=e149]: days planned
+          - generic [ref=e150]:
+            - generic [ref=e151]: "12"
+            - generic [ref=e152]: items to buy
+        - generic [ref=e153]:
+          - generic [ref=e154]: Tuesday, 8 April
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - generic [ref=e158]: Breakfast
+              - generic [ref=e159]: Nasi Lemak
+              - generic [ref=e160]: Sambal, egg, ikan bilis
+            - generic [ref=e161]:
+              - generic [ref=e163]: Lunch
+              - generic [ref=e164]: Chicken Rice
+              - generic [ref=e165]: Steamed, chili sauce
+            - generic [ref=e166]:
+              - generic [ref=e168]: Dinner
+              - generic [ref=e169]: Pasta Bolognese
+              - generic [ref=e170]: Pasta, salad, garlic bread
+        - generic [ref=e171]: 👨‍🍳 Start cooking dinner
+        - generic [ref=e172]:
+          - generic [ref=e173]: Coming up
+          - generic [ref=e174]:
+            - generic [ref=e175]: Wed
+            - generic [ref=e176]: Roti Canai · Laksa · Rendang
+          - generic [ref=e177]:
+            - generic [ref=e178]: Thu
+            - generic [ref=e179]: Not planned
+          - generic [ref=e180]:
+            - generic [ref=e181]: Fri
+            - generic [ref=e182]: Char Kuey Teow · Satay
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - generic [ref=e185]: 📅
+            - text: Today
+          - generic [ref=e186]:
+            - generic [ref=e187]: 📖
+            - text: Dishes
+          - generic [ref=e188]:
+            - generic [ref=e189]: 🛒
+            - text: Shop
+          - generic [ref=e190]:
+            - generic [ref=e191]: 📦
+            - text: Pantry
+          - generic [ref=e192]:
+            - generic [ref=e193]: ⚙️
+            - text: More
