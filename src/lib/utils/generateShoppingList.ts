@@ -1,4 +1,4 @@
-import type { PantryItem, ShoppingItem } from '@/lib/supabase/types'
+import type { MealPlanSlot, PantryItem, ShoppingItem } from '@/lib/supabase/types'
 
 const SECTION_MAP: Record<string, string> = {
   // Produce
@@ -34,16 +34,16 @@ function getSection(name: string): string {
   return 'Other'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function generateShoppingList(slots: any[], pantryItems: PantryItem[] = []): ShoppingItem[] {
+export function generateShoppingList(
+  slots: MealPlanSlot[],
+  pantryItems: PantryItem[] = []
+): ShoppingItem[] {
   const map = new Map<string, ShoppingItem>()
 
   for (const slot of slots) {
-    const meal = slot.meal
-    if (!meal) continue
-    const mealDishes = meal.meal_dishes ?? []
-    for (const md of mealDishes) {
-      const dish = md.dish
+    const slotDishes = slot.slot_dishes ?? []
+    for (const sd of slotDishes) {
+      const dish = sd.dish
       if (!dish) continue
       for (const ing of dish.ingredients ?? []) {
         const key = ing.name.toLowerCase().trim()
@@ -54,7 +54,6 @@ export function generateShoppingList(slots: any[], pantryItems: PantryItem[] = [
           } else if (ing.quantity != null) {
             existing.quantity = ing.quantity
           }
-          // Keep first unit seen
           if (!existing.unit && ing.unit) existing.unit = ing.unit
         } else {
           map.set(key, {
@@ -62,8 +61,8 @@ export function generateShoppingList(slots: any[], pantryItems: PantryItem[] = [
             quantity: ing.quantity,
             unit: ing.unit ?? null,
             checked: false,
-            source: meal.name,
-            store_section: getSection(ing.name),
+            source: dish.name,
+            store_section: ing.store_section ?? getSection(ing.name),
           })
         }
       }
@@ -79,7 +78,7 @@ export function generateShoppingList(slots: any[], pantryItems: PantryItem[] = [
         item.quantity -= pantryItem.quantity
         if (item.quantity <= 0) map.delete(key)
       } else {
-        map.delete(key) // have it, no qty tracking — remove entirely
+        map.delete(key)
       }
     }
   }
