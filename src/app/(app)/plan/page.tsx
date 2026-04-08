@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeSlots } from '@/hooks/useRealtimeSlots'
-import { MealPickerModal } from '@/components/plan/MealPickerModal'
+import { upsertSlot } from '@/lib/supabase/queries/mealPlan'
+import { setSlotDishes } from '@/lib/supabase/queries/slotDishes'
+import { DishPickerModal } from '@/components/plan/DishPickerModal'
 import { Spinner } from '@/components/ui/Spinner'
 import {
   getWeekStart,
@@ -14,33 +17,17 @@ import {
   SLOT_KEYS,
   SLOT_LABELS,
 } from '@/lib/utils/weekDates'
-import type { MealPlanSlot, DayOfWeek, MealSlotType, Meal } from '@/lib/supabase/types'
+import type { MealPlanSlot, DayOfWeek, MealSlotType } from '@/lib/supabase/types'
 
-const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-
-// Vivid SVG icon backgrounds per slot type (UI/UX Pro Max: distinct, high-contrast)
-const SLOT_COLORS: Record<string, { bg: string; icon: string }> = {
-  breakfast: { bg: 'bg-amber-400',   icon: 'text-white' },
-  lunch:     { bg: 'bg-emerald-500', icon: 'text-white' },
-  dinner:    { bg: 'bg-violet-500',  icon: 'text-white' },
+const SLOT_DOT_COLORS: Record<MealSlotType, string> = {
+  breakfast: 'var(--breakfast)',
+  lunch: 'var(--lunch)',
+  dinner: 'var(--dinner)',
 }
 
-function formatWeekRange(weekStart: Date): string {
-  const end = new Date(weekStart)
-  end.setDate(end.getDate() + 6)
-  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-  const startStr = weekStart.toLocaleDateString('en-US', opts)
-  const endStr = end.toLocaleDateString('en-US', { ...opts, year: 'numeric' })
-  return `${startStr} – ${endStr}`
-}
-
-export default function PlanPage() {
+export default function TodayPage() {
   const [familyId, setFamilyId] = useState<string | null>(null)
-  const [familyName, setFamilyName] = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
-  const [weekOffset, setWeekOffset] = useState(0)
-  const [selectedDay, setSelectedDay] = useState<number>(0) // 0=Mon..6=Sun
-  const [generating, setGenerating] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerDay, setPickerDay] = useState<DayOfWeek>('mon')
   const [pickerSlot, setPickerSlot] = useState<MealSlotType>('breakfast')
@@ -48,36 +35,18 @@ export default function PlanPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // Compute week start from offset
-  const baseToday = new Date()
-  const thisMonday = getWeekStart(baseToday)
-  const weekStartDate = new Date(thisMonday)
-  weekStartDate.setDate(thisMonday.getDate() + weekOffset * 7)
+  const weekStartDate = getWeekStart(new Date())
   const weekStart = formatDate(weekStartDate)
   const weekDays = getWeekDays(weekStartDate)
-
-  // Determine today's index for default selection
-  useEffect(() => {
-    const todayDay = new Date().getDay() // 0=Sun
-    // Convert to Mon-indexed: Mon=0..Sun=6
-    const monIndexed = todayDay === 0 ? 6 : todayDay - 1
-    setSelectedDay(monIndexed)
-  }, [])
 
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: profile } = await supabase
         .from('users').select('family_id').eq('id', user.id).single()
-
       if (!profile?.family_id) { router.push('/onboarding'); return }
       setFamilyId(profile.family_id)
-
-      const { data: family } = await supabase
-        .from('families').select('name').eq('id', profile.family_id).single()
-      setFamilyName(family?.name ?? '')
       setProfileLoading(false)
     }
     loadProfile()
@@ -85,85 +54,20 @@ export default function PlanPage() {
   }, [])
 
   const { slots, loading: slotsLoading } = useRealtimeSlots(familyId, weekStart)
-  const [localSlots, setLocalSlots] = useState<MealPlanSlot[]>([])
 
-  useEffect(() => {
-    setLocalSlots(slots)
-  }, [slots])
+  // Today info
+  const today = new Date()
+  const todayDayIdx = today.getDay() === 0 ? 6 : today.getDay() - 1
+  const todayKey = DAY_KEYS[todayDayIdx]
+  const todaySlots = slots.filter((s) => s.day === todayKey)
 
-  const handleUpdate = useCallback((updated: MealPlanSlot) => {
-    setLocalSlots((prev) => {
-      const exists = prev.some((s) => s.id === updated.id)
-      return exists ? prev.map((s) => s.id === updated.id ? updated : s) : [...prev, updated]
-    })
-  }, [])
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleClear = useCallback((day: DayOfWeek, mealSlot: MealSlotType) => {
-    setLocalSlots((prev) => prev.filter((s) => !(s.day === day && s.meal_slot === mealSlot)))
-  }, [])
-
-  async function handleGenerateShoppingList() {
-    if (!familyId) return
-    setGenerating(true)
-    try {
-      const { data: slotsWithIngredients } = await supabase
-        .from('meal_plan_slots')
-        .select('*, meal:meals(*, meal_dishes(*, dish:dishes(*, ingredients(*))))')
-        .eq('family_id', familyId)
-        .eq('week_start_date', weekStart)
-
-      const { data: pantryItems } = await supabase
-        .from('pantry_items')
-        .select('*')
-        .eq('family_id', familyId)
-
-      const { generateShoppingList } = await import('@/lib/utils/generateShoppingList')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const items = generateShoppingList((slotsWithIngredients as any) ?? [], pantryItems ?? [])
-
-      await supabase
-        .from('shopping_lists')
-        .upsert(
-          { family_id: familyId, week_start_date: weekStart, items },
-          { onConflict: 'family_id,week_start_date' }
-        )
-
-      router.push('/shopping')
-    } finally {
-      setGenerating(false)
-    }
-  }
-
-  async function handleSelectMeal(meal: Meal) {
-    if (!familyId) return
-    const existing = localSlots.find(
-      (s) => s.day === pickerDay && s.meal_slot === pickerSlot
-    )
-
-    if (existing) {
-      const { data: updated } = await supabase
-        .from('meal_plan_slots')
-        .update({ meal_id: meal.id })
-        .eq('id', existing.id)
-        .select('*, meal:meals(*)')
-        .single()
-      if (updated) handleUpdate(updated as MealPlanSlot)
-    } else {
-      const { data: inserted } = await supabase
-        .from('meal_plan_slots')
-        .insert({
-          family_id: familyId,
-          week_start_date: weekStart,
-          day: pickerDay,
-          meal_slot: pickerSlot,
-          meal_id: meal.id,
-        })
-        .select('*, meal:meals(*)')
-        .single()
-      if (inserted) handleUpdate(inserted as MealPlanSlot)
-    }
-  }
+  // Stats
+  const todayMealCount = todaySlots.filter((s) => (s.slot_dishes ?? []).length > 0).length
+  const plannedDays = new Set(slots.filter((s) => (s.slot_dishes ?? []).length > 0).map((s) => s.day)).size
+  const totalToBuy = slots.reduce((acc, s) => {
+    const dishes = s.slot_dishes ?? []
+    return acc + dishes.reduce((a, sd) => a + (sd.dish?.ingredients?.length ?? 0), 0)
+  }, 0)
 
   function openPicker(day: DayOfWeek, slot: MealSlotType) {
     setPickerDay(day)
@@ -171,191 +75,200 @@ export default function PlanPage() {
     setPickerOpen(true)
   }
 
+  const handlePickerConfirm = useCallback(async (dishIds: string[]) => {
+    if (!familyId) return
+    const slot = await upsertSlot(familyId, weekStart, pickerDay, pickerSlot)
+    await setSlotDishes(slot.id, dishIds)
+  }, [familyId, weekStart, pickerDay, pickerSlot])
+
   if (profileLoading) {
     return <div className="flex justify-center items-center h-40"><Spinner /></div>
   }
 
-  const currentDayKey = DAY_KEYS[selectedDay]
-  const currentDayDate = weekDays[selectedDay]
-  const currentDayName = currentDayDate.toLocaleDateString('en-US', { weekday: 'long' })
-
-  // Slots for selected day
-  const daySlots = localSlots.filter((s) => s.day === currentDayKey)
-  const plannedCount = localSlots.filter((s) => s.meal_id).length
-
-  const isThisWeek = weekOffset === 0
-  const weekLabel = isThisWeek ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : `Week ${weekOffset > 0 ? '+' : ''}${weekOffset}`
+  const todayLabel = today.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div className="flex flex-col min-h-full">
-      {/* Sticky glass week header */}
-      <div className="glass-strong sticky top-0 z-20 px-4 pt-3 pb-2">
-        {/* Row 1: Week label + avatars */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-baseline gap-2">
-            <span className="font-heading font-bold text-[#0F172A] dark:text-[#FED7AA] text-sm">
-              {weekLabel}
-            </span>
-            <span className="text-orange-600 font-semibold text-xs">
-              {formatWeekRange(weekStartDate)}
-            </span>
-          </div>
-          {/* Family member avatars */}
-          <div className="flex -space-x-1.5">
-            <div className="w-7 h-7 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center text-white text-[10px] font-bold font-heading shadow-sm">
-              {familyName.charAt(0) || 'F'}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Week navigation */}
-        <div className="flex items-center justify-between mb-2.5">
-          <button
-            onClick={() => setWeekOffset((w) => w - 1)}
-            className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-base font-bold hover:bg-orange-600 transition-colors shadow-sm"
-            aria-label="Previous week"
-          >
-            ‹
-          </button>
-          <span className="text-xs text-slate-500 dark:text-orange-200/60 font-semibold font-heading">
-            {currentDayName}
-          </span>
-          <button
-            onClick={() => setWeekOffset((w) => w + 1)}
-            className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-base font-bold hover:bg-orange-600 transition-colors shadow-sm"
-            aria-label="Next week"
-          >
-            ›
-          </button>
-        </div>
-
-        {/* Row 3: Day picker strip — solid orange pill for active */}
-        <div className="grid grid-cols-7 gap-1">
-          {weekDays.map((day, i) => {
-            const isSelected = i === selectedDay
-            const dateNum = day.getDate()
-            return (
-              <button
-                key={i}
-                onClick={() => setSelectedDay(i)}
-                className={`flex flex-col items-center py-1.5 rounded-xl transition-all ${
-                  isSelected
-                    ? 'bg-orange-500 shadow-sm shadow-orange-500/40'
-                    : 'hover:bg-white/30'
-                }`}
-              >
-                <span className={`text-[10px] font-bold leading-none mb-1 ${
-                  isSelected ? 'text-orange-100' : 'text-amber-700 dark:text-orange-300'
-                }`}>
-                  {DAY_LETTERS[i]}
-                </span>
-                <span className={`text-sm font-heading font-bold leading-none ${
-                  isSelected ? 'text-white' : 'text-[#0F172A] dark:text-[#FED7AA]'
-                }`}>
-                  {dateNum}
-                </span>
-              </button>
-            )
-          })}
+      {/* Header */}
+      <div className="px-5 pt-6 pb-2 flex items-center justify-between">
+        <h1 className="text-[28px] font-bold tracking-[-0.5px]" style={{ color: 'var(--text-primary)' }}>
+          MakanJe
+        </h1>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'var(--surface)', color: 'var(--text-secondary)' }}>
+          👤
         </div>
       </div>
 
-      {/* Scrollable day content */}
-      <div className="flex-1 px-4 pt-4 pb-6">
+      {/* Stat row */}
+      <div className="px-5 py-3 flex gap-3">
+        {[
+          { label: 'meals today', value: todayMealCount },
+          { label: 'days planned', value: plannedDays },
+          { label: 'to buy', value: totalToBuy },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="flex-1 rounded-[12px] px-3 py-3"
+            style={{ background: 'var(--surface)' }}
+          >
+            <p className="text-[22px] font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
+            <p className="text-[11px] font-medium tracking-[0.2px]" style={{ color: 'var(--text-secondary)' }}>{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="px-5 pt-4 pb-6 flex-1">
         {slotsLoading ? (
           <div className="flex justify-center py-12"><Spinner /></div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {SLOT_KEYS.map((slotKey) => {
-              const slot = daySlots.find((s) => s.meal_slot === slotKey)
-              const hasMeal = slot?.meal_id && slot?.meal
-              const label = SLOT_LABELS[slotKey]
+          <>
+            {/* Today section */}
+            <h2 className="text-[15px] font-bold tracking-[-0.2px] mb-4" style={{ color: 'var(--text-primary)' }}>
+              {todayLabel}
+            </h2>
 
-              return (
-                <div key={slotKey}>
-                  {/* Section label — vivid per slot */}
-                  <p className={`text-[11px] font-bold uppercase tracking-widest mb-2 ${
-                    slotKey === 'breakfast' ? 'text-amber-600' :
-                    slotKey === 'lunch'     ? 'text-emerald-600' :
-                                             'text-violet-600'
-                  }`}>
-                    {label}
-                  </p>
+            {/* Timeline */}
+            <div className="flex flex-col gap-0 relative ml-3">
+              {/* Vertical line */}
+              <div className="absolute left-[5px] top-2 bottom-2 w-px" style={{ background: 'var(--border)' }} />
 
-                  {hasMeal && slot?.meal ? (
-                    /* Filled slot card — high contrast */
-                    <button
-                      onClick={() => openPicker(currentDayKey, slotKey)}
-                      className="glass rounded-2xl p-3.5 w-full flex items-center gap-3 hover:brightness-95 transition-all active:scale-[0.98] text-left shadow-sm"
-                    >
-                      {/* Vivid solid icon circle */}
-                      <div className={`w-[38px] h-[38px] rounded-full ${SLOT_COLORS[slotKey].bg} flex items-center justify-center shrink-0 shadow-sm`}>
-                        <svg className={`w-5 h-5 ${SLOT_COLORS[slotKey].icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          {slotKey === 'breakfast' && <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1m14.95-6.364l-.707.707M6.757 17.657l-.707.707m0-12.728l.707.707M17.243 17.657l.707.707" />}
-                          {slotKey === 'lunch'     && <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M3 6h18M3 18h18" />}
-                          {slotKey === 'dinner'    && <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />}
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[#0F172A] dark:text-[#FED7AA] font-bold text-sm font-heading truncate">
-                          {slot.meal.name}
-                        </p>
-                        <p className="text-slate-500 dark:text-orange-200/60 text-xs mt-0.5 font-medium">
-                          tap to change
-                        </p>
-                      </div>
-                      <span className="text-orange-400 text-xl leading-none shrink-0 font-bold">›</span>
-                    </button>
-                  ) : (
-                    /* Empty slot */
-                    <button
-                      onClick={() => openPicker(currentDayKey, slotKey)}
-                      className="w-full rounded-2xl p-3.5 flex items-center gap-3 border-2 border-dashed border-orange-300/60 hover:border-orange-400 hover:bg-orange-50/40 transition-all active:scale-[0.98]"
-                    >
-                      <div className="w-[38px] h-[38px] rounded-full bg-orange-100 flex items-center justify-center shrink-0 text-orange-500 font-bold text-xl">
-                        +
-                      </div>
-                      <p className="text-orange-400 font-medium text-sm">
-                        Add {currentDayName}&apos;s {label.toLowerCase()}…
+              {SLOT_KEYS.map((slotKey) => {
+                const slot = todaySlots.find((s) => s.meal_slot === slotKey)
+                const dishes = slot?.slot_dishes ?? []
+                const hasDishes = dishes.length > 0
+                const label = SLOT_LABELS[slotKey]
+
+                return (
+                  <div key={slotKey} className="flex gap-4 pb-6 relative">
+                    {/* Dot */}
+                    <div
+                      className="w-[11px] h-[11px] rounded-full shrink-0 mt-1 z-10"
+                      style={{ background: SLOT_DOT_COLORS[slotKey] }}
+                    />
+
+                    <div className="flex-1 -mt-0.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.8px] mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        {label}
                       </p>
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+
+                      {hasDishes ? (
+                        <div className="flex flex-col gap-2">
+                          {dishes.map((sd) => (
+                            <button
+                              key={sd.id}
+                              onClick={() => sd.dish && router.push(`/dishes/${sd.dish.id}`)}
+                              className="rounded-[8px] px-3 py-2.5 text-left transition-colors"
+                              style={{ background: 'var(--surface)' }}
+                            >
+                              <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                {sd.dish?.name ?? 'Unknown dish'}
+                              </p>
+                              {sd.dish?.prep_time_min && (
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                                  {sd.dish.prep_time_min} min
+                                </p>
+                              )}
+                            </button>
+                          ))}
+                          {dishes.length > 1 && (
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                              {dishes.length} dishes
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => openPicker(todayKey, slotKey)}
+                          className="text-[13px] font-medium"
+                          style={{ color: 'var(--accent)' }}
+                        >
+                          + Add
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Cook CTA */}
+            {todaySlots.some((s) => (s.slot_dishes ?? []).length > 0) && (
+              <button
+                onClick={() => {
+                  // Find first slot with dishes and navigate to first dish
+                  const firstSlot = todaySlots.find((s) => (s.slot_dishes ?? []).length > 0)
+                  const firstDish = firstSlot?.slot_dishes?.[0]?.dish
+                  if (firstDish) router.push(`/dishes/${firstDish.id}`)
+                }}
+                className="w-full py-3.5 rounded-pill text-white font-semibold text-sm mt-2"
+                style={{ background: 'var(--accent)' }}
+              >
+                Start cooking {SLOT_LABELS[todaySlots.find((s) => (s.slot_dishes ?? []).length > 0)?.meal_slot ?? 'dinner'].toLowerCase()}
+              </button>
+            )}
+
+            {/* This Week preview */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[15px] font-bold tracking-[-0.2px]" style={{ color: 'var(--text-primary)' }}>
+                  This Week
+                </h2>
+                <Link
+                  href="/plan/week"
+                  className="text-[13px] font-medium"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  View all →
+                </Link>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                {DAY_KEYS.map((dayKey, i) => {
+                  const dayDate = weekDays[i]
+                  const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short' })
+                  const daySlots = slots.filter((s) => s.day === dayKey)
+                  const dishNames = daySlots
+                    .flatMap((s) => s.slot_dishes ?? [])
+                    .map((sd) => sd.dish?.name)
+                    .filter(Boolean)
+                  const isToday = dayKey === todayKey
+
+                  return (
+                    <Link
+                      key={dayKey}
+                      href="/plan/week"
+                      className="flex items-center gap-3 py-2.5 px-1 rounded-lg transition-colors"
+                    >
+                      <span
+                        className="text-[13px] font-semibold w-8"
+                        style={{ color: isToday ? 'var(--accent)' : 'var(--text-secondary)' }}
+                      >
+                        {dayName}
+                      </span>
+                      <span
+                        className="text-[13px] flex-1 truncate"
+                        style={{ color: dishNames.length > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
+                      >
+                        {dishNames.length > 0 ? dishNames.join(' · ') : 'Not planned'}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Sticky bottom CTA */}
-      <div className="sticky bottom-0 px-4 mb-3 pb-safe">
-        <button
-          onClick={handleGenerateShoppingList}
-          disabled={generating}
-          className="w-full flex items-center justify-between p-4 rounded-2xl border border-white/30 backdrop-blur-[10px] bg-[rgba(5,150,105,0.82)] hover:bg-[rgba(5,150,105,0.90)] transition-colors disabled:opacity-60"
-        >
-          <div>
-            <p className="text-white font-semibold text-sm font-heading">
-              {generating ? 'Generating…' : 'Generate Shopping List'}
-            </p>
-            <p className="text-white/70 text-xs mt-0.5">
-              {plannedCount} meal{plannedCount !== 1 ? 's' : ''} planned this week
-            </p>
-          </div>
-          <span className="text-white/80 text-xl">→</span>
-        </button>
-      </div>
-
-      {/* Meal picker modal */}
+      {/* Dish picker modal */}
       {familyId && (
-        <MealPickerModal
+        <DishPickerModal
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
           familyId={familyId}
-          weekStart={weekStart}
           day={pickerDay}
           mealSlot={pickerSlot}
-          onSelect={handleSelectMeal}
+          onConfirm={handlePickerConfirm}
         />
       )}
     </div>
