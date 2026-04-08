@@ -9,8 +9,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        canvas: "var(--canvas)",
+        surface: "var(--surface)",
+        "surface-elevated": "var(--surface-elevated)",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "text-tertiary": "var(--text-tertiary)",
+        accent: "var(--accent)",
+        border: "var(--border)",
+        divider: "var(--divider)",
+        breakfast: "var(--breakfast)",
+        lunch: "var(--lunch)",
+        dinner: "var(--dinner)",
+        success: "var(--success)",
+        error: "var(--error)",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+      },
+      borderRadius: {
+        pill: "980px",
       },
     },
   },

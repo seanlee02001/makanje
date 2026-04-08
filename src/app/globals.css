@@ -2,70 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Google Fonts ──────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ── Base ──────────────────────────────────────────────── */
-html, body {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
+:root {
+  --canvas: #ffffff;
+  --surface: #f5f5f7;
+  --surface-elevated: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: rgba(0,0,0,0.48);
+  --text-tertiary: rgba(0,0,0,0.24);
+  --accent: #0071e3;
+  --border: rgba(0,0,0,0.08);
+  --divider: rgba(0,0,0,0.04);
+  --nav-glass: rgba(255,255,255,0.72);
+  --nav-border: rgba(0,0,0,0.06);
+  --breakfast: #F59E0B;
+  --lunch: #10B981;
+  --dinner: #8B5CF6;
+  --success: #10B981;
+  --error: #EF4444;
 }
 
-/* Prevent iOS Safari auto-zoom on input focus (requires font-size >= 16px) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #000000;
+    --surface: #1c1c1e;
+    --surface-elevated: #2c2c2e;
+    --text-primary: #f5f5f7;
+    --text-secondary: rgba(255,255,255,0.48);
+    --text-tertiary: rgba(255,255,255,0.24);
+    --accent: #2997ff;
+    --border: rgba(255,255,255,0.08);
+    --divider: rgba(255,255,255,0.04);
+    --nav-glass: rgba(0,0,0,0.72);
+    --nav-border: rgba(255,255,255,0.06);
+  }
+}
+
+[data-theme="dark"] {
+  --canvas: #000000;
+  --surface: #1c1c1e;
+  --surface-elevated: #2c2c2e;
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(255,255,255,0.48);
+  --text-tertiary: rgba(255,255,255,0.24);
+  --accent: #2997ff;
+  --border: rgba(255,255,255,0.08);
+  --divider: rgba(255,255,255,0.04);
+  --nav-glass: rgba(0,0,0,0.72);
+  --nav-border: rgba(255,255,255,0.06);
+}
+
+html, body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--canvas);
+  color: var(--text-primary);
+}
+
+/* Prevent iOS Safari auto-zoom on input focus */
 input, textarea, select {
   font-size: 16px;
 }
 
-/* ── Utilities ─────────────────────────────────────────── */
 @layer utilities {
-  /* Cards — solid white, sharp border, light shadow */
-  .glass {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-  /* Sticky headers */
-  .glass-strong {
-    background: #FFFFFF;
-    border-bottom: 1px solid #E5E7EB;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  }
-  /* Bottom nav */
-  .glass-nav {
-    background: #FFFFFF;
-    border-top: 1px solid #E5E7EB;
-  }
-
-  /* ── Page backgrounds — solid flat colours ── */
-  .bg-plan     { background: #FFF7ED; }   /* orange-50  */
-  .bg-meals    { background: #FFF7ED; }   /* orange-50  */
-  .bg-shopping { background: #F0FDF4; }   /* green-50   */
-  .bg-settings { background: #FFF7ED; }   /* orange-50  */
-  .bg-login    { background: #EA580C; }   /* solid orange (top half handled in layout) */
-
+  .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .text-balance { text-wrap: balance; }
-  .font-heading { font-family: 'Nunito', sans-serif; }
-  .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
-  .pb-safe      { padding-bottom: env(safe-area-inset-bottom, 0px); }
-}
-
-/* ── Dark mode ─────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  .bg-plan, .bg-meals, .bg-settings { background: #1C1107; }
-  .bg-shopping                       { background: #052E16; }
-
-  .glass {
-    background: #2D1A08;
-    border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: none;
-  }
-  .glass-strong {
-    background: #1C1107;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    box-shadow: none;
-  }
-  .glass-nav {
-    background: #1C1107;
-    border-top: 1px solid rgba(255,255,255,0.08);
-  }
 }
