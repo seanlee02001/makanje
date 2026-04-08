@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getDishes } from '@/lib/supabase/queries/dishes'
-import { DishCard } from '@/components/meals/DishCard'
+import { TagFilter } from '@/components/dishes/TagFilter'
 import type { Dish } from '@/lib/supabase/types'
 
 type DishWithCount = Dish & { ingredients: { id: string }[] }
@@ -13,6 +13,7 @@ export default function DishesPage() {
   const [dishes, setDishes] = useState<DishWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -30,99 +31,120 @@ export default function DishesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const filtered = dishes.filter((d) =>
-    d.name.toLowerCase().includes(query.toLowerCase())
-  )
+  const allTags = Array.from(new Set(dishes.flatMap((d) => d.tags ?? [])))
+
+  const filtered = dishes.filter((d) => {
+    const matchesQuery = d.name.toLowerCase().includes(query.toLowerCase())
+    const matchesTag = tagFilter === null || (d.tags ?? []).includes(tagFilter)
+    return matchesQuery && matchesTag
+  })
 
   return (
     <div className="flex flex-col min-h-full">
-      {/* Sticky glass header */}
-      <div className="glass-strong sticky top-0 z-20 px-4 pt-4 pb-3">
+      {/* Header */}
+      <div className="sticky top-0 z-20 px-5 pt-6 pb-3" style={{ background: 'var(--canvas)', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">
+          <h1 className="text-[28px] font-bold tracking-[-0.5px]" style={{ color: 'var(--text-primary)' }}>
             Dishes
           </h1>
           <Link
             href="/dishes/new"
-            className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center font-bold text-xl hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/30"
+            className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xl text-white"
+            style={{ background: 'var(--accent)' }}
             aria-label="Add dish"
           >
             +
           </Link>
         </div>
 
-        {/* Search bar */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-            </svg>
-          </div>
-          <input
-            type="search"
-            placeholder="Search dishes…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full glass rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 dark:text-orange-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30"
-          />
-        </div>
+        {/* Search */}
+        <input
+          type="search"
+          placeholder="Search dishes…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full rounded-[10px] px-4 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2"
+          style={{
+            background: 'var(--surface)',
+            color: 'var(--text-primary)',
+          }}
+        />
+
+        {/* Tag filter */}
+        <TagFilter tags={allTags} selected={tagFilter} onSelect={setTagFilter} />
       </div>
 
-      {/* Import from URL banner */}
-      <div className="mx-4 my-3">
-        <Link
-          href="/dishes/import"
-          className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-400 shadow-md shadow-orange-500/30 hover:shadow-orange-500/50 transition-all active:scale-[0.98]"
-        >
-          <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-sm font-heading">Import Recipe URL</p>
-            <p className="text-white/80 text-xs mt-0.5">AI extracts ingredients automatically</p>
-          </div>
-          <span className="text-white font-bold text-lg shrink-0">›</span>
-        </Link>
-      </div>
-
-      {/* Dish grid */}
-      <div className="px-4 pb-6 flex-1">
+      {/* Dish list */}
+      <div className="px-5 pb-6 flex-1">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-[#EA580C]/30 border-t-[#EA580C] rounded-full animate-spin" />
-          </div>
+          <div className="flex justify-center py-12"><Spinner /></div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-[#92400E]">
-            {query ? (
+          <div className="text-center py-16">
+            {query || tagFilter ? (
               <>
-                <p className="font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">No results</p>
-                <p className="text-sm mt-1">Try a different search term.</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No results</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Try a different search or filter.</p>
               </>
             ) : (
               <>
-                <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
-                  <svg className="h-7 w-7 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 2v5M9.5 2v5M7 7c0 1 .5 1.5 1.25 1.5S9.5 8 9.5 7" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 8.5V22" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 2c0 0 3 3 3 6h-3V2z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 8v14" />
-                  </svg>
-                </div>
-                <p className="font-bold text-[#0F172A] dark:text-[#FED7AA] font-heading">No dishes yet</p>
-                <p className="text-sm mt-1 text-[#92400E]">Add your first dish or import a recipe.</p>
+                <p className="text-4xl mb-3">🍳</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No dishes yet</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Add your first dish or import a recipe.</p>
               </>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <ul className="divide-y" style={{ borderColor: 'var(--divider)' }}>
             {filtered.map((dish) => (
-              <DishCard key={dish.id} dish={dish} />
+              <li key={dish.id}>
+                <Link
+                  href={`/dishes/${dish.id}`}
+                  className="flex items-center gap-3 py-3.5"
+                >
+                  {/* Emoji icon */}
+                  <div
+                    className="w-10 h-10 rounded-[8px] flex items-center justify-center text-lg shrink-0"
+                    style={{ background: 'var(--surface)' }}
+                  >
+                    🍽️
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {dish.name}
+                    </p>
+                    <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                      {dish.ingredients.length} ingredient{dish.ingredients.length !== 1 ? 's' : ''}
+                      {dish.prep_time_min ? ` · ${dish.prep_time_min} min` : ''}
+                    </p>
+                    {(dish.tags ?? []).length > 0 && (
+                      <div className="flex gap-1 mt-1">
+                        {dish.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                            style={{ background: 'var(--divider)', color: 'var(--text-secondary)' }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chevron */}
+                  <span className="text-sm shrink-0" style={{ color: 'var(--text-tertiary)' }}>›</span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </div>
   )
+}
+
+function Spinner() {
+  return <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
 }
